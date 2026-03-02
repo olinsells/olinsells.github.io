@@ -1,5 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Olin Sells | Marketplace</title>
+    <style>
+        :root {
+            --dark-blue: #0a192f;
+            --light-blue: #112240;
+            --accent-blue: #64ffda;
+            --text-main: #ccd6f6;
+            --text-dim: #8892b0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--dark-blue);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: var(--light-blue);
+            padding: 2.5rem 1rem;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            border-bottom: 2px solid var(--accent-blue);
+        }
+
+        h1 { margin: 0; color: var(--accent-blue); letter-spacing: 2px; font-size: 2.5rem; }
+        p.subtitle { color: var(--text-dim); margin-top: 0.5rem; font-weight: 300; }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background-color: var(--light-blue);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(100, 255, 218, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent-blue);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+        }
+
+        .card-img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            background-color: #000;
+        }
+
+        .card-content {
+            padding: 1.5rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .price {
+            color: var(--accent-blue);
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        h3 { margin: 0.5rem 0; font-size: 1.2rem; }
+
+        .description {
+            color: var(--text-dim);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+            flex-grow: 1;
+        }
+
+        .contact-btn {
+            display: block;
+            width: 100%;
+            padding: 0.8rem 0;
+            background-color: transparent;
+            color: var(--accent-blue);
+            border: 1px solid var(--accent-blue);
+            text-align: center;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .contact-btn:hover {
+            background-color: rgba(100, 255, 218, 0.1);
+        }
+
+        #loading { 
+            text-align: center; 
+            width: 100%; 
+            grid-column: 1/-1; 
+            padding: 3rem;
+            font-size: 1.2rem;
+            color: var(--accent-blue);
+        }
+    </style>
+</head>
 <body>
 
-<h1> Olin Sells </h1>
+<header>
+    <h1>OLIN SELLS</h1>
+    <p class="subtitle">Campus Marketplace MVP</p>
+</header>
+
+<div class="container" id="product-grid">
+    <div id="loading">Searching for items...</div>
+</div>
+
+<script>
+    // YOUR GOOGLE SHEETS CSV URL
+    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSPZgbroblc6QjQpP3XUstsyFuAwJrtZdNQq2zRne2uFhXIbLe1DDBSeAR4PiGF8eN2SK20ViiKddwh/pub?output=csv'; 
+
+    async function fetchItems() {
+        try {
+            // Fetch the data and bypass browser cache
+            const response = await fetch(`${SHEET_URL}&t=${new Date().getTime()}`);
+            
+            if (!response.ok) throw new Error('Network response was not ok');
+            
+            const csvData = await response.text();
+            
+            // Split into rows and remove the header
+            const rows = csvData.split(/\r?\n/).slice(1); 
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = ''; 
+
+            rows.forEach(row => {
+                // This regex handles commas inside quotes (standard CSV behavior)
+                const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                
+                // Ensure we have enough data columns
+                if (columns.length < 5 || !columns[0]) return; 
+
+                // Clean up quotes and whitespace from each column
+                const [title, price, desc, contact, img] = columns.map(col => col.replace(/^"|"$/g, '').trim());
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <img src="${img}" class="card-img" alt="${title}" onerror="this.src='https://via.placeholder.com/400x300?text=Image+Not+Found'">
+                    <div class="card-content">
+                        <span class="price">${price}</span>
+                        <h3>${title}</h3>
+                        <p class="description">${desc}</p>
+                        <a href="mailto:${contact}" class="contact-btn">Contact Seller</a>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            if (grid.innerHTML === '') {
+                grid.innerHTML = '<div id="loading">No items found in the sheet.</div>';
+            }
+
+        } catch (error) {
+            console.error('Fetch error:', error);
+            document.getElementById('loading').innerHTML = `
+                <div style="color: #ff6b6b">
+                    <strong>Error Loading Items</strong><br>
+                    Make sure you are using "Live Server" in VS Code.<br>
+                    Current URL: ${window.location.protocol}
+                </div>`;
+        }
+    }
+
+    // Run the function
+    fetchItems();
+</script>
 
 </body>
+</html>
