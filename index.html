@@ -123,69 +123,180 @@
     <p class="subtitle">Campus Marketplace MVP</p>
 </header>
 
-<div class="container" id="product-grid">
+<form id="product-form">
+  <label for="product-name">Product Name:</label>
+  <input type="text" id="product-name" name="product-name" required>
+
+  <label for="product-image">Upload Image:</label>
+  <input type="file" id="product-image" name="product-image" accept="image/*" required>
+
+  <button type="submit">Submit</button>
+</form>
+<div id="status"></div>
+
+<div class="container" id="image-container">
     <div id="loading">Searching for items...</div>
 </div>
 
 <script>
-    // YOUR GOOGLE SHEETS CSV URL
-    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSPZgbroblc6QjQpP3XUstsyFuAwJrtZdNQq2zRne2uFhXIbLe1DDBSeAR4PiGF8eN2SK20ViiKddwh/pub?output=csv'; 
+  const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/damwgsukr/image/upload'; // Replace YOUR_CLOUD_NAME
+  const CLOUDINARY_UPLOAD_PRESET = 'unsigned_upload'; // Replace YOUR_UPLOAD_PRESET
 
-    async function fetchItems() {
-        try {
-            // Fetch the data and bypass browser cache
-            const response = await fetch(`${SHEET_URL}&t=${new Date().getTime()}`);
-            
-            if (!response.ok) throw new Error('Network response was not ok');
-            
-            const csvData = await response.text();
-            
-            // Split into rows and remove the header
-            const rows = csvData.split(/\r?\n/).slice(1); 
-            const grid = document.getElementById('product-grid');
-            grid.innerHTML = ''; 
+  document.getElementById('product-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
 
-            rows.forEach(row => {
-                // This regex handles commas inside quotes (standard CSV behavior)
-                const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                
-                // Ensure we have enough data columns
-                if (columns.length < 5 || !columns[0]) return; 
+    const statusDiv = document.getElementById('status');
+    statusDiv.textContent = 'Uploading...';
 
-                // Clean up quotes and whitespace from each column
-                const [title, price, desc, contact, img] = columns.map(col => col.replace(/^"|"$/g, '').trim());
+    const productName = document.getElementById('product-name').value;
+    const productImage = document.getElementById('product-image').files[0];
 
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <img src="${img}" class="card-img" alt="${title}" onerror="this.src='https://via.placeholder.com/400x300?text=Image+Not+Found'">
-                    <div class="card-content">
-                        <span class="price">${price}</span>
-                        <h3>${title}</h3>
-                        <p class="description">${desc}</p>
-                        <a href="mailto:${contact}" class="contact-btn">Contact Seller</a>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-
-            if (grid.innerHTML === '') {
-                grid.innerHTML = '<div id="loading">No items found in the sheet.</div>';
-            }
-
-        } catch (error) {
-            console.error('Fetch error:', error);
-            document.getElementById('loading').innerHTML = `
-                <div style="color: #ff6b6b">
-                    <strong>Error Loading Items</strong><br>
-                    Make sure you are using "Live Server" in VS Code.<br>
-                    Current URL: ${window.location.protocol}
-                </div>`;
-        }
+    if (!productImage) {
+      statusDiv.textContent = 'Please upload an image.';
+      return;
     }
 
-    // Run the function
-    fetchItems();
+    try {
+      // Upload image to Cloudinary
+      const formData = new FormData();
+      formData.append('file', productImage);
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+      const cloudinaryResponse = await fetch(CLOUDINARY_URL, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const cloudinaryData = await cloudinaryResponse.json();
+      if (!cloudinaryData.secure_url) {
+        throw new Error('Image upload failed.');
+      }
+
+      const imageUrl = cloudinaryData.secure_url;
+
+      // Add the image URL to your product listing logic
+      console.log('Image uploaded successfully:', imageUrl);
+      statusDiv.textContent = 'Image uploaded successfully!';
+    } catch (error) {
+      console.error(error);
+      statusDiv.textContent = 'An error occurred. Please try again.';
+    }
+  });
+
+  async function fetchData() {
+    const sheetId = '1mtEPmFUPAOKuYkGwr9zl8f1lAaOpt8skmTvANqJe49Y'; // Replace with your Google Sheet ID
+    const apiKey = 'AIzaSyBasUwah0wqiz_OHSCiLyr5YgP1HeiShZU'; // Replace with your API key
+    const range = 'Listings!A:G'; // Adjust range to match your sheet structure
+
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${apiKey}`;
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const rows = data.values;
+
+      if (!rows) {
+        console.error('No data found in the specified range.');
+        return;
+      }
+
+      const container = document.getElementById('image-container');
+      container.innerHTML = ''; // Clear loading message
+
+      rows.slice(2).forEach(row => {
+        const productName = row[1];
+        if (!productName) return; // Skip listing if the product name is blank
+
+        const timestamp = row[0];
+        const sellerName = row[2];
+        const sellerEmail = row[3];
+        const price = row[5];
+        const productDescription = row[6];
+
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const cardContent = `
+          <div class="card-content">
+            <p class="price">$${price}</p>
+            <h3>${productName}</h3>
+            <p class="description">${productDescription}</p>
+            <p><strong>Seller:</strong> ${sellerName}</p>
+            <p><strong>Contact:</strong> <a href="mailto:${sellerEmail}">${sellerEmail}</a></p>
+            <p><strong>Posted:</strong> ${timestamp}</p>
+          </div>
+        `;
+
+        card.innerHTML = cardContent;
+        container.appendChild(card);
+      });
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  }
+
+  // Fetch data on page load
+  fetchData();
+
+  function onFormSubmit(e) {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    const row = e.values; // Get the submitted row data
+    const rowIndex = sheet.getLastRow(); // Get the index of the last row
+
+    // Check if the row has enough columns and the Google Drive link exists
+    if (!row || row.length < 5 || !row[4]) {
+      Logger.log(`Row ${rowIndex} is missing the Google Drive link. Skipping.`);
+      return;
+    }
+
+    const driveLink = row[4]; // Assuming the Google Drive link is in the 5th column
+    const cloudinaryUrlColumn = 7; // Column to store the Cloudinary URL (adjust as needed)
+
+    try {
+      // Extract the file ID from the Google Drive link
+      const fileId = extractFileId(driveLink);
+      if (!fileId) {
+        Logger.log(`No file ID found for row ${rowIndex}. Skipping.`);
+        return;
+      }
+
+      // Get the file as a blob
+      const file = DriveApp.getFileById(fileId);
+      const blob = file.getBlob();
+
+      // Upload the file to Cloudinary
+      const response = UrlFetchApp.fetch(CLOUDINARY_URL, {
+        method: 'post',
+        payload: {
+          file: blob,
+          upload_preset: CLOUDINARY_UPLOAD_PRESET,
+        },
+      });
+
+      const cloudinaryData = JSON.parse(response.getContentText());
+      const cloudinaryUrl = cloudinaryData.secure_url;
+
+      if (!cloudinaryUrl) {
+        Logger.log(`Cloudinary upload failed for row ${rowIndex}.`);
+        return;
+      }
+
+      // Update the sheet with the Cloudinary URL
+      sheet.getRange(rowIndex, cloudinaryUrlColumn).setValue(cloudinaryUrl);
+      Logger.log(`Cloudinary URL inserted for row ${rowIndex}: ${cloudinaryUrl}`);
+    } catch (error) {
+      Logger.log(`Error processing row ${rowIndex}: ${error.message}`);
+    }
+  }
+
+  function extractFileId(driveink) {
+    const match = driveLink.match(/[-\w]{25,}/);
+    return match ? match[0] : null;
+  }
 </script>
 
 </body>
