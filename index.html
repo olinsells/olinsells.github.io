@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Olin Sells | Marketplace</title>
+    <title>Olin Deals | Marketplace</title>
     <style>
         :root {
             --dark-blue: #0a192f;
@@ -286,7 +286,7 @@
 
 <header>
     <div class="brand">
-        <h1>OLIN SELLS</h1>
+        <h1>OLIN DEALS</h1>
         <p class="subtitle">Campus Marketplace MVP</p>
     </div>
     <div class="header-actions">
@@ -365,7 +365,7 @@
       descEl.textContent = data.description;
       dateEl.textContent = data.date ? `Posted ${data.date}` : '';
       emailEl.textContent = data.email;
-      inquireEl.href = `mailto:${data.email}?subject=${encodeURIComponent('Olin Sells: ' + data.name)}`;
+      inquireEl.href = `mailto:${data.email}?subject=${encodeURIComponent('Olin Deals: ' + data.name)}`;
       imgEl.src = data.imageUrl || '';
       backdrop.classList.add('is-open');
       // CHANGE 5: Disable background scrolling
@@ -404,7 +404,7 @@
             <div class="card-meta">
               <div class="card-meta-top"><div class="seller-name">${row[2]}</div><div class="posted-date">${fDate}</div></div>
               <div class="detail-contact">
-                <a class="meta-link" href="mailto:${row[3]}?subject=Olin Sells: ${productName}">Inquire</a>
+                <a class="meta-link" href="mailto:${row[3]}?subject=Olin Deals: ${productName}">Inquire</a>
                 <span class="detail-email">or email <span>${row[3]}</span></span>
               </div>
             </div>
