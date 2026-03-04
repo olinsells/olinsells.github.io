@@ -13,6 +13,11 @@
             --text-dim: #8892b0;
         }
 
+        /* Addition 1: Prevent background from scrolling when modal is open */
+        body.modal-open {
+            overflow: hidden;
+        }
+
         body {
             font-family: "Helvetica", "Helvetica Neue", Arial, sans-serif;
             background-color: var(--dark-blue);
@@ -93,8 +98,6 @@
             margin: 2rem auto;
             padding: 0 1.5rem;
             display: grid;
-            /* fluid grid - cards will be at least 300px wide 
-              but will expand to fill the remaining space. */
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 2rem;
         }
@@ -117,7 +120,7 @@
 
         .card-img {
             width: 100%;
-            aspect-ratio: 3 / 4; /* portrait 4x3: width:height = 3:4 */
+            aspect-ratio: 3 / 4;
             object-fit: cover;
             background-color: #000;
             display: block;
@@ -232,15 +235,17 @@
             background-color: rgba(100, 255, 218, 0.1);
         }
 
-        /* Detail modal */
+        /* Addition 2: Update Backdrop to handle scrolling and top-alignment */
         .detail-backdrop {
             position: fixed;
             inset: 0;
             background: rgba(2, 12, 27, 0.8);
             display: none;
-            align-items: center;
+            align-items: flex-start; /* Start at top for scrolling */
             justify-content: center;
             z-index: 1500;
+            overflow-y: auto; /* Enable scroll on backdrop */
+            padding: 2rem 0;  /* Padding so modal doesn't touch edges */
         }
 
         .detail-backdrop.is-open {
@@ -252,13 +257,14 @@
             border-radius: 16px;
             max-width: 900px;
             width: min(90vw, 900px);
-            max-height: 90vh;
+            /* Removed fixed height constraint to allow natural scrolling */
             display: grid;
             grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.4fr);
             overflow: hidden;
             border: 1px solid rgba(100, 255, 218, 0.35);
             box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
             align-items: stretch;
+            position: relative;
         }
 
         .detail-image-wrap {
@@ -327,11 +333,15 @@
             position: absolute;
             top: 0.75rem;
             right: 1rem;
-            background: transparent;
+            background: rgba(10, 25, 47, 0.5); /* Slight bg for visibility */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
             border: none;
             color: var(--text-dim);
             font-size: 1.3rem;
             cursor: pointer;
+            z-index: 10;
         }
 
         .detail-close:hover {
@@ -358,7 +368,6 @@
             color: var(--accent-blue);
         }
 
-        /* Tablet and Mobile Adjustments */
         @media (max-width: 800px) {
             .container {
                 grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -367,7 +376,6 @@
             }
         }
 
-        /* Extra small screens (Phones) */
         @media (max-width: 480px) {
             header {
                 padding: 0.6rem 0.8rem;
@@ -478,9 +486,6 @@
     if (timestamp == null) return '';
     const t = String(timestamp).trim();
     if (!t) return '';
-
-    // Google Forms timestamps are commonly "M/D/YYYY HH:MM:SS".
-    // If we can safely strip time, do so; otherwise fall back to the raw value.
     if (t.includes(' ')) return t.split(' ')[0];
     if (t.includes('T')) return t.split('T')[0];
     return t;
@@ -500,6 +505,8 @@
     function close() {
       backdrop.classList.remove('is-open');
       backdrop.setAttribute('aria-hidden', 'true');
+      // Addition 3a: Re-enable scrolling on body
+      document.body.classList.remove('modal-open');
     }
 
     function open(data) {
@@ -530,6 +537,10 @@
 
       backdrop.classList.add('is-open');
       backdrop.setAttribute('aria-hidden', 'false');
+      
+      // Addition 3b: Prevent background scrolling and reset modal scroll to top
+      document.body.classList.add('modal-open');
+      backdrop.scrollTop = 0; 
     }
 
     backdrop.addEventListener('click', (event) => {
@@ -550,9 +561,9 @@
   }
 
   async function fetchData() {
-    const sheetId = '1mtEPmFUPAOKuYkGwr9zl8f1lAaOpt8skmTvANqJe49Y'; // Replace with your Google Sheet ID
-    const apiKey = 'AIzaSyBasUwah0wqiz_OHSCiLyr5YgP1HeiShZU'; // Replace with your API key
-    const range = 'Listings!A:H'; // Adjust range to include column 8
+    const sheetId = '1mtEPmFUPAOKuYkGwr9zl8f1lAaOpt8skmTvANqJe49Y'; 
+    const apiKey = 'AIzaSyBasUwah0wqiz_OHSCiLyr5YgP1HeiShZU'; 
+    const range = 'Listings!A:H'; 
 
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${apiKey}`;
 
@@ -571,20 +582,20 @@
       }
 
       const container = document.getElementById('image-container');
-      container.innerHTML = ''; // Clear loading message
+      container.innerHTML = ''; 
 
       const detail = setupDetailModal();
 
       rows.slice(1).forEach(row => {
         const productName = row[1];
-        if (!productName) return; // Skip listing if the product name is blank
+        if (!productName) return; 
 
         const timestamp = row[0];
         const sellerName = row[2];
         const sellerEmail = row[3];
         const price = row[5];
         const productDescription = row[6];
-        const imageUrl = row[7]; // Get the image URL from column 8
+        const imageUrl = row[7]; 
 
         const card = document.createElement('div');
         card.className = 'card';
@@ -627,7 +638,7 @@
           img.src = imageUrl;
           img.alt = productName;
           img.className = 'card-img';
-          card.prepend(img); // Add the image at the top of the card
+          card.prepend(img); 
         }
 
         card.addEventListener('click', (event) => {
@@ -650,7 +661,6 @@
     }
   }
 
-  // Fetch data on page load
   fetchData();
 </script>
 
