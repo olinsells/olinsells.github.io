@@ -10,7 +10,7 @@ Anyone can post listings or contact others about their listing. Please keep the 
 
 Click on the “Post an item” button in the top right of the webpage. It will take you to a Google form that you can fill out. The form asks for a product name, description, price, seller name, contact email, and an image. The item should appear on the website within a minute of submitting the form.
 
-Instructions to remove a listing can be found by clicking the “Remove listing” button or going to this page \<LINK REMOVE A LISTING PAGE\>
+Instructions to remove a listing can be found by clicking the “Remove listing” button or going to [this page](remove_item.html)
 
 To edit a listing it is best to just delete your old listing and make a new one.
 
