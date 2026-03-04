@@ -22,5 +22,5 @@ We are trying to see if an “Olin Depop” platform would be useful so we are r
 
 The team behind this project is: Aditi Lagisetty, Sam Jackson, Anika Kale, Kai Barret, and Derek Martielli
 
-If you have feedback or need any help please contact us here \<MAILTO LINK\> or email dmartielli@olin.edu
+If you have feedback or need any help please contact us [here](mailto:dmartielli@olin.edu?subject=Olin%20Deals%20Feedback%2FHelp) or email dmartielli@olin.edu
 
