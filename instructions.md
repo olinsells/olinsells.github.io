@@ -2,7 +2,9 @@
 
 ## UPDATE
 
-The project technically ended but we paid for a year of hosting (until March 2027) and we don't really have to do anything to keep it up so... I'm gonna check on it every now and then and if gets some use we will probably start updating it again. Until then you can keep using it as you were. 
+  - The project technically ended but we paid for a year of hosting (until March 2027) and we don't really have to do anything to keep it up so... I'm gonna check on it every now and then and if gets some use we will probably start updating it again. Until then you can keep using it as you were. 
+
+  - Just another update (4/19/26) to let people know that we are still here maintaining this project!
 
 ## What?
 
